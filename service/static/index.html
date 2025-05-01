@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Regoround</title>
+        <link rel="stylesheet" href="output.css" />
+        <link rel="icon" href="/images/favicon.ico" type="image/ico" />
+        <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+        <script src="index.js"></script>
+        <script src="rego-mode.js"></script>
+        <link rel="stylesheet" href="custom.css" />
+	<script src="wasm_exec.js"></script>
+	<script>
+		const go = new Go()
+		WebAssembly.instantiateStreaming(fetch("rego.wasm"), go.importObject).then((result) => {
+			go.run(result.instance);
+                        init();
+		});
+	</script>
+    </head>
+    <body class="h-full text-gray-100">
+  <header class="bg-gray-800 p-4 shadow">
+    <h1 class="text-2xl font-bold">Regoround</h1>
+  </header>
+
+  <main class="h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden">
+    <!-- Left Column -->
+    <section class="p-4 flex flex-col border-r border-gray-700 h-full">
+      <label for="package" class="mb-2 text-gray-900 font-medium">Rego Policy</label>
+      <textarea id="package" name="package" class="editor-box flex-grow">package play
+
+default allow := false 
+
+allow if input.message == "world"
+      </textarea>
+    </section>
+
+    <!-- Right Column -->
+    <section class="p-4 flex flex-col gap-4 h-full">
+      <div class="flex gap-2">
+        <button id="format" type="button" class="inline-flex items-center rounded-md bg-slate-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 text-gray-900">Format</button>
+        <button name="evaluate" id="evaluate" type="submit" form="playground" class="inline-flex items-center rounded-md bg-slate-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 text-gray-900">Evaluate</button>
+      </div>
+
+      <form id="playground" class="flex flex-col flex-grow gap-4">
+        <div class="flex flex-col">
+          <label for="input" class="text-gray-900 font-medium mb-1">Input</label>
+          <textarea id="input" name="input" class="editor-box flex-grow">
+{
+  "message": "world"
+}
+          </textarea>
+        </div>
+        <div class="flex flex-col">
+          <label for="data" class="text-gray-900 font-medium mb-1">Data</label>
+          <textarea id="data" name="data" class="editor-box flex-grow"></textarea>
+        </div>
+        <div class="flex flex-col">
+          <label for="response" class="text-gray-900 font-medium mb-1">Response</label>
+          <textarea id="response" rows="10" readonly class="text-gray-900 bg-gray-100 editor-box flex-grow"></textarea>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+
+</html>

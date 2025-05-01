@@ -1,0 +1,29 @@
+.editor-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.CodeMirror {
+    border: 1px solid #ddd;
+    height: 200px;
+    resize: vertical;
+}
+
+.Package {
+    height: 70% !important;
+    border: 1px solid #ddd;
+    resize: vertical;
+    overflow: auto !important;
+}
+
+.resize-handle {
+    height: 10px;
+    background: #f0f0f0;
+    cursor: ns-resize;
+    border: 1px solid #ddd;
+    border-top: none;
+}
+
+.resize-handle:hover {
+    background: #e0e0e0;
+}

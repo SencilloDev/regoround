@@ -1,0 +1,22 @@
+env:
+  - IMAGE_TAG={{.Tag}}
+
+
+project_name: regoroundctl
+
+builds:
+  - ldflags: "-extldflags= -w -X 'github.com/SencilloDev/regoround/cmd.Version={{.Tag}}'"
+    flags:
+      - -mod=vendor
+    env:
+      - "CGO_ENABLED=0"
+      - "GO111MODULE=on"
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+source:
+  enabled: true
