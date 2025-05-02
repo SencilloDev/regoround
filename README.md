@@ -2,6 +2,8 @@
 
 This is a rego playground that you can run locally. It also allows you to load a custom bundle into the playground to use.
 
+URLs are safe to share. The URL parameters are built from the code itself and so cannot be guessed.
+
 ## Getting Started
 
 ### Custom bundle
