@@ -40,9 +40,8 @@ func start(cmd *cobra.Command, args []string) error {
 	}
 
 	agent := service.NewAgent(service.AgentOpts{
-		BundleName: "bundle.tar.gz",
-		Env:        env,
-		Logger:     logger,
+		Env:    env,
+		Logger: logger,
 	})
 
 	agent.SetBundle(viper.GetString("bundle_path"))

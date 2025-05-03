@@ -76,6 +76,13 @@ func (a *Agent) SetRuntime() {
 }
 
 func (a *Agent) SetBundle(path string) error {
+	if path == "" {
+		b := bundle.Bundle{}
+		b.Data = make(map[string]any)
+		a.RawBundle = b
+		return nil
+	}
+
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -151,12 +158,13 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 	if reqData == "" {
 		reqData = `{}`
 	}
-	var thing map[string]any
-	if err := json.Unmarshal([]byte(reqData), &thing); err != nil {
+
+	var tempData map[string]any
+	if err := json.Unmarshal([]byte(reqData), &tempData); err != nil {
 		return nil, err
 	}
 
-	store, err := a.GetStorage(ctx, thing)
+	store, err := a.GetStorage(ctx, tempData)
 	if err != nil {
 		return nil, err
 	}
