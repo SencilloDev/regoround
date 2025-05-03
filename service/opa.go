@@ -47,8 +47,6 @@ type AgentOpts struct {
 }
 
 func NewAgent(opts AgentOpts) *Agent {
-	config, _ := cache.ParseCachingConfig(nil)
-	interQueryCache := cache.NewInterQueryCache(config)
 	a := &Agent{
 		BundleName: opts.BundleName,
 		Logger:     opts.Logger,
@@ -56,7 +54,6 @@ func NewAgent(opts AgentOpts) *Agent {
 		OPAStore:   inmem.New(),
 		Compiler:   ast.NewCompiler(),
 		Modifiers:  opts.Modifiers,
-		Cache:      cache.InterQueryCache(interQueryCache),
 	}
 	if opts.Env != nil {
 		a.SetRuntime()
@@ -101,7 +98,7 @@ func (a *Agent) SetBundle(path string) error {
 	return nil
 }
 
-func (a *Agent) GetStorage(ctx context.Context, data map[string]any) (storage.Store, error) {
+func (a *Agent) GetStorage(ctx context.Context, data map[string]any) (storage.Store, *ast.Compiler, error) {
 	store := inmem.New()
 	rawBundle := a.RawBundle.Copy()
 
@@ -113,28 +110,29 @@ func (a *Agent) GetStorage(ctx context.Context, data map[string]any) (storage.St
 	c := storage.NewContext()
 	txn, err := store.NewTransaction(ctx, storage.TransactionParams{Context: c, Write: true})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	compiler := ast.NewCompiler()
 	opts := bundle.ActivateOpts{
 		Ctx:      ctx,
 		Store:    store,
 		Bundles:  bundles,
 		Txn:      txn,
 		TxnCtx:   c,
-		Compiler: a.Compiler,
+		Compiler: compiler,
 		Metrics:  metrics.New(),
 	}
 
 	if err := bundle.Activate(&opts); err != nil {
 		a.Logger.Error(err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := store.Commit(ctx, txn); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return store, nil
+	return store, compiler, nil
 }
 
 // Eval evaluates the input against the policy package
@@ -164,7 +162,7 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 		return nil, err
 	}
 
-	store, err := a.GetStorage(ctx, tempData)
+	store, compiler, err := a.GetStorage(ctx, tempData)
 	if err != nil {
 		return nil, err
 	}
@@ -177,19 +175,17 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 	}
 
 	r := rego.New(
-		rego.Compiler(a.Compiler),
+		rego.Compiler(compiler),
 		rego.Query("data.play"),
 		rego.Module("play.rego", pkg),
 		rego.Transaction(txn),
 		rego.Store(store),
 		rego.ParsedInput(data),
-		rego.InterQueryBuiltinCache(a.Cache),
 		a.astFunc,
 	)
 
 	prepared, err := r.PrepareForEval(ctx)
 	if err != nil {
-
 		a.Logger.Error(err.Error())
 		return []byte(err.Error()), nil
 	}
