@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -17,7 +17,6 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 	"github.com/open-policy-agent/opa/v1/topdown/cache"
-	"github.com/open-policy-agent/opa/v1/util"
 )
 
 var (
@@ -28,6 +27,7 @@ type BundleModifyFunc func(b bundle.Bundle) (bundle.Bundle, error)
 
 type Agent struct {
 	BundleName  string
+	RawBundle   bundle.Bundle
 	ObjectStore nats.ObjectStore
 	OPAStore    storage.Store
 	mutex       sync.RWMutex
@@ -76,9 +76,6 @@ func (a *Agent) SetRuntime() {
 }
 
 func (a *Agent) SetBundle(path string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -92,34 +89,28 @@ func (a *Agent) SetBundle(path string) error {
 	}
 	a.Logger.Info("generated tarball from bundle successfully")
 
-	for _, v := range a.Modifiers {
-		a.Logger.Debug("modifying bundle")
-		b, err = v(b)
-		if err != nil {
-			return fmt.Errorf("error in bundle modifier: %w", err)
-		}
-	}
-
-	if err := a.Activate(ctx, b); err != nil {
-		return err
-	}
-	a.Logger.Info("activated bundle successfully")
+	a.RawBundle = b
 
 	return nil
 }
 
-func (a *Agent) Activate(ctx context.Context, b bundle.Bundle) error {
+func (a *Agent) GetStorage(ctx context.Context, data map[string]any) (storage.Store, error) {
+	store := inmem.New()
+	rawBundle := a.RawBundle.Copy()
+
+	maps.Copy(rawBundle.Data, data)
+
 	bundles := map[string]*bundle.Bundle{
-		"playground": &b,
+		"playground": &rawBundle,
 	}
 	c := storage.NewContext()
-	txn, err := a.OPAStore.NewTransaction(ctx, storage.TransactionParams{Context: c, Write: true})
+	txn, err := store.NewTransaction(ctx, storage.TransactionParams{Context: c, Write: true})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	opts := bundle.ActivateOpts{
 		Ctx:      ctx,
-		Store:    a.OPAStore,
+		Store:    store,
 		Bundles:  bundles,
 		Txn:      txn,
 		TxnCtx:   c,
@@ -129,11 +120,14 @@ func (a *Agent) Activate(ctx context.Context, b bundle.Bundle) error {
 
 	if err := bundle.Activate(&opts); err != nil {
 		a.Logger.Error(err.Error())
-		a.OPAStore.Abort(ctx, txn)
-		return err
+		return nil, err
 	}
 
-	return a.OPAStore.Commit(ctx, txn)
+	if err := store.Commit(ctx, txn); err != nil {
+		return nil, err
+	}
+
+	return store, nil
 }
 
 // Eval evaluates the input against the policy package
@@ -154,27 +148,24 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 		return nil, err
 	}
 
-	store := a.OPAStore
+	if reqData == "" {
+		reqData = `{}`
+	}
+	var thing map[string]any
+	if err := json.Unmarshal([]byte(reqData), &thing); err != nil {
+		return nil, err
+	}
 
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
+	store, err := a.GetStorage(ctx, thing)
+	if err != nil {
+		return nil, err
+	}
+
 	c := storage.NewContext()
 	txn, err := store.NewTransaction(ctx, storage.TransactionParams{Context: c, Write: true})
 	if err != nil {
 		a.Logger.Error(err.Error())
 		return nil, err
-	}
-	defer store.Abort(ctx, txn)
-
-	if reqData != "" {
-		var jdata map[string]any
-
-		if err := util.UnmarshalJSON([]byte(reqData), &jdata); err != nil {
-			return nil, err
-		}
-		if err := store.Write(ctx, txn, storage.AddOp, storage.Path{}, jdata); err != nil {
-			return nil, err
-		}
 	}
 
 	r := rego.New(
@@ -226,4 +217,19 @@ func readInputGetV1(data []byte) (ast.Value, *any, error) {
 	}
 	v, err := ast.InterfaceToValue(input)
 	return v, &input, err
+}
+
+func CustomData(ctx context.Context, data []byte) (bundle.Bundle, error) {
+	b := bundle.Bundle{}
+	var bundleData map[string]any
+	if err := json.Unmarshal(data, &bundleData); err != nil {
+		return b, err
+	}
+
+	custData := map[string]any{
+		"custom": bundleData,
+	}
+	b.Data["new"] = custData
+
+	return b, nil
 }
