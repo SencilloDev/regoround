@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"maps"
 	"os"
 	"sync"
 
@@ -47,6 +46,8 @@ type AgentOpts struct {
 }
 
 func NewAgent(opts AgentOpts) *Agent {
+	config, _ := cache.ParseCachingConfig(nil)
+	interQueryCache := cache.NewInterQueryCache(config)
 	a := &Agent{
 		BundleName: opts.BundleName,
 		Logger:     opts.Logger,
@@ -54,6 +55,7 @@ func NewAgent(opts AgentOpts) *Agent {
 		OPAStore:   inmem.New(),
 		Compiler:   ast.NewCompiler(),
 		Modifiers:  opts.Modifiers,
+		Cache:      interQueryCache,
 	}
 	if opts.Env != nil {
 		a.SetRuntime()
@@ -98,11 +100,26 @@ func (a *Agent) SetBundle(path string) error {
 	return nil
 }
 
+func deepMerge(dst, src map[string]any) map[string]any {
+	for k, v := range src {
+		if vMap, ok := v.(map[string]any); ok {
+			if dstVMap, found := dst[k].(map[string]any); found {
+				dst[k] = deepMerge(dstVMap, vMap)
+			} else {
+				dst[k] = deepMerge(make(map[string]any), vMap)
+			}
+		} else {
+			dst[k] = v
+		}
+	}
+	return dst
+}
+
 func (a *Agent) GetStorage(ctx context.Context, data map[string]any) (storage.Store, *ast.Compiler, error) {
 	store := inmem.New()
 	rawBundle := a.RawBundle.Copy()
 
-	maps.Copy(rawBundle.Data, data)
+	rawBundle.Data = deepMerge(rawBundle.Data, data)
 
 	bundles := map[string]*bundle.Bundle{
 		"playground": &rawBundle,
@@ -181,6 +198,7 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 		rego.Transaction(txn),
 		rego.Store(store),
 		rego.ParsedInput(data),
+		rego.InterQueryBuiltinCache(a.Cache),
 		a.astFunc,
 	)
 
