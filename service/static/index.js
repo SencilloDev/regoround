@@ -2,7 +2,7 @@ let editors = {};
 
 function syncEditorHeights() {
   const ids = ["input", "data", "response"];
-  const editors = ids.map(id => document.getElementById(id));
+  const editors = ids.map((id) => document.getElementById(id));
 
   editors.forEach((editor, _, all) => {
     editor.addEventListener("input", () => {
@@ -17,23 +17,25 @@ function syncEditorHeights() {
 // Call it after DOM is ready
 document.addEventListener("DOMContentLoaded", syncEditorHeights);
 
-
 function initializeEditors() {
   // Initialize Rego editor
-  editors.package = CodeMirror.fromTextArea(document.getElementById("package"), {
-    mode: "rego",
-    lineNumbers: true,
-    theme: "default",
-    autoCloseBrackets: true,
-    matchBrackets: true,
-    lineWrapping: true,
-  });
+  editors.package = CodeMirror.fromTextArea(
+    document.getElementById("package"),
+    {
+      mode: "rego",
+      lineNumbers: true,
+      theme: "default",
+      autoCloseBrackets: true,
+      matchBrackets: true,
+      lineWrapping: true,
+    },
+  );
 
   // Initialize JSON editors
   editors.input = CodeMirror.fromTextArea(document.getElementById("input"), {
     mode: "application/json",
     lineNumbers: true,
- theme: "default",
+    theme: "default",
     autoCloseBrackets: true,
     matchBrackets: true,
   });
@@ -47,11 +49,10 @@ function initializeEditors() {
   });
 
   Object.values(editors).forEach((editor) => {
-    let height = (editor.options.mode === 'rego') ? "90%" : "200px";
+    let height = editor.options.mode === "rego" ? "90%" : "200px";
     editor.setSize("100%", height);
   });
 }
-
 
 function saveEditorContent() {
   Object.entries(editors).forEach(([id, editor]) => {
@@ -86,7 +87,7 @@ function hydrate() {
   let m = new Map(Object.entries(editors));
   parser.searchParams.forEach((val, param) => {
     if (editors[param]) {
-      editors[param].setValue(decompressData(val))
+      editors[param].setValue(decompressData(val));
     }
   });
 }
@@ -95,21 +96,51 @@ function updateSearchParams(params) {
   const url = new URL(window.location.href);
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.set(key, value);
-  })
+  });
 
-  history.replaceState(null, '', url);
+  history.replaceState(null, "", url);
 }
 
 function compressAndUpdateURL() {
   const params = {};
   Object.entries(editors).forEach(([id, editor]) => {
     params[id] = compressData(editor.getValue());
-  })
+  });
   updateSearchParams(params);
 }
 
+document.addEventListener("keydown", async function (event) {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+    event.preventDefault(); // optional: prevents default behavior
+    await sendRequest();
+  }
+});
 
+async function sendRequest() {
+  saveEditorContent();
+  compressAndUpdateURL();
 
+  const payload = {
+    input: editors.input.getValue(),
+    data: editors.data.getValue(),
+    package: editors.package.getValue(),
+  };
+
+  try {
+    const response = await fetch("/api/v1/evaluate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await response.text();
+    document.getElementById("response").value = text;
+  } catch (err) {
+    document.getElementById("response").value = "Error: " + err.message;
+  }
+}
 
 // Initialize when the DOM is ready
 function init() {
@@ -121,30 +152,7 @@ function init() {
 
   // Add form submit handler
   document.getElementById("evaluate").addEventListener("click", async (e) => {
-      e.preventDefault();
-
-      saveEditorContent();
-      compressAndUpdateURL()
-
-       const payload = {
-         input: editors.input.getValue(),
-         data: editors.data.getValue(),
-         package: editors.package.getValue()
-       };
-
-      try {
-        const response = await fetch("/api/v1/evaluate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const text = await response.text();
-        document.getElementById("response").value = text;
-      } catch (err) {
-        document.getElementById("response").value = "Error: " + err.message;
-      }
-    });
-};
+    e.preventDefault();
+    await sendRequest();
+  });
+}
