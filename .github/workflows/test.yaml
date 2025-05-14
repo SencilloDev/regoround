@@ -8,7 +8,7 @@ jobs:
   test:
     strategy:
       matrix:
-    runs-on: ["self-hosted"]
+    runs-on: "self-hosted"
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
