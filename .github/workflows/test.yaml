@@ -6,8 +6,6 @@ on:
   workflow_call:
 jobs:
   test:
-    strategy:
-      matrix:
     runs-on: "self-hosted"
     steps:
       - name: Install Go
