@@ -17,6 +17,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,7 +34,7 @@ import (
 )
 
 var (
-	ErrNotFound error = fmt.Errorf("package not found")
+	ErrNotFound error = errors.New("package not found")
 )
 
 type BundleModifyFunc func(b bundle.Bundle) (bundle.Bundle, error)
