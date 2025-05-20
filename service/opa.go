@@ -26,6 +26,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/cover"
 	"github.com/open-policy-agent/opa/v1/metrics"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/storage"
@@ -167,6 +168,11 @@ func (a *Agent) GetStorage(ctx context.Context, data map[string]any) (storage.St
 	return store, compiler, nil
 }
 
+type Response struct {
+	Data     []byte            `json:"data"`
+	Coverage *cover.FileReport `json:"coverage"`
+}
+
 // Eval evaluates the input against the policy package
 func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]byte, error) {
 	if input == nil {
@@ -206,14 +212,21 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 		return nil, err
 	}
 
+	cov := cover.New()
+	parsed, err := ast.ParseModule("play.rego", pkg)
+	if err != nil {
+		a.Logger.Error(err.Error())
+	}
+
 	r := rego.New(
 		rego.Compiler(compiler),
 		rego.Query("data.play"),
-		rego.Module("play.rego", pkg),
+		rego.ParsedModule(parsed),
 		rego.Transaction(txn),
 		rego.Store(store),
 		rego.ParsedInput(data),
 		rego.InterQueryBuiltinCache(a.Cache),
+		rego.QueryTracer(cov),
 		a.astFunc,
 	)
 
@@ -227,10 +240,20 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 		rego.EvalParsedInput(data),
 		rego.EvalTransaction(txn),
 		rego.EvalInterQueryBuiltinCache(a.Cache),
+		rego.EvalTracer(cov),
 	)
 	if err != nil {
 		a.Logger.Error(err.Error())
 		return []byte(err.Error()), nil
+	}
+
+	report := cov.Report(map[string]*ast.Module{
+		"play.rego": parsed,
+	})
+
+	fr, ok := report.Files["play.rego"]
+	if !ok {
+		return nil, fmt.Errorf("error getting files from report")
 	}
 
 	if len(results) < 1 {
@@ -244,7 +267,12 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 
 	a.Logger.Debug(fmt.Sprintf("response: %s", string(value)))
 
-	return value, nil
+	resp := Response{
+		Data:     value,
+		Coverage: fr,
+	}
+
+	return json.Marshal(resp)
 }
 
 func readInputGetV1(data []byte) (ast.Value, *any, error) {
