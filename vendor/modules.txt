@@ -1,3 +1,9 @@
+# aead.dev/minisign v0.3.0
+## explicit; go 1.21
+aead.dev/minisign
+# github.com/SencilloDev/gupdate v0.0.0-20250416015622-a1ca4089901b
+## explicit; go 1.22.2
+github.com/SencilloDev/gupdate
 # github.com/SencilloDev/sencillo-go v1.1.0
 ## explicit; go 1.22.2
 github.com/SencilloDev/sencillo-go/errors
@@ -10,6 +16,9 @@ github.com/agnivade/levenshtein
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
+# github.com/briandowns/spinner v1.23.0
+## explicit; go 1.17
+github.com/briandowns/spinner
 # github.com/cenkalti/backoff/v4 v4.3.0
 ## explicit; go 1.18
 github.com/cenkalti/backoff/v4
@@ -42,6 +51,9 @@ github.com/expr-lang/expr/patcher
 github.com/expr-lang/expr/types
 github.com/expr-lang/expr/vm
 github.com/expr-lang/expr/vm/runtime
+# github.com/fatih/color v1.17.0
+## explicit; go 1.17
+github.com/fatih/color
 # github.com/felixge/httpsnoop v1.0.4
 ## explicit; go 1.13
 github.com/felixge/httpsnoop
@@ -98,9 +110,20 @@ github.com/klauspost/compress/flate
 github.com/klauspost/compress/internal/le
 github.com/klauspost/compress/internal/race
 github.com/klauspost/compress/s2
+# github.com/mattn/go-colorable v0.1.13
+## explicit; go 1.15
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.20
+## explicit; go 1.15
+github.com/mattn/go-isatty
 # github.com/minio/highwayhash v1.0.3
 ## explicit; go 1.15
 github.com/minio/highwayhash
+# github.com/minio/selfupdate v0.6.0
+## explicit; go 1.14
+github.com/minio/selfupdate
+github.com/minio/selfupdate/internal/binarydist
+github.com/minio/selfupdate/internal/osext
 # github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 ## explicit
 github.com/munnerz/goautoneg
@@ -153,7 +176,6 @@ github.com/open-policy-agent/opa/ast
 github.com/open-policy-agent/opa/ast/json
 github.com/open-policy-agent/opa/bundle
 github.com/open-policy-agent/opa/capabilities
-github.com/open-policy-agent/opa/cover
 github.com/open-policy-agent/opa/internal/bundle
 github.com/open-policy-agent/opa/internal/cidr/merge
 github.com/open-policy-agent/opa/internal/compiler
@@ -416,7 +438,9 @@ golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/nacl/box
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/ocsp
+golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/salsa20/salsa
+golang.org/x/crypto/scrypt
 # golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 ## explicit; go 1.23.0
 golang.org/x/exp/slices
@@ -437,12 +461,16 @@ golang.org/x/net/trace
 # golang.org/x/sys v0.32.0
 ## explicit; go 1.23.0
 golang.org/x/sys/cpu
+golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
 golang.org/x/sys/windows/svc
 golang.org/x/sys/windows/svc/eventlog
 golang.org/x/sys/windows/svc/mgr
+# golang.org/x/term v0.31.0
+## explicit; go 1.23.0
+golang.org/x/term
 # golang.org/x/text v0.24.0
 ## explicit; go 1.23.0
 golang.org/x/text/cases
