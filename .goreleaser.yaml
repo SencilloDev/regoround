@@ -1,6 +1,8 @@
 env:
   - IMAGE_TAG={{.Tag}}
 
+archives:
+  - format: binary
 
 project_name: regoroundctl
 
