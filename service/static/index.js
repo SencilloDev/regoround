@@ -133,10 +133,6 @@ document.addEventListener("keydown", async function (event) {
   }
 });
 
-//.addEventListener("change", (e) => {
-//  coverageEnabled = e.target.checked;
-//});
-
 async function sendRequest() {
   saveEditorContent();
   compressAndUpdateURL();
@@ -165,7 +161,6 @@ async function sendRequest() {
     clearAllHighlights(editors.package);
 
     if (coverageToggle.checked) {
-      console.log("enabled");
       highlightLines(editors.package, data);
     }
     let eval = atob(data.data);
