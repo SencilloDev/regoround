@@ -133,6 +133,10 @@ document.addEventListener("keydown", async function (event) {
   }
 });
 
+//.addEventListener("change", (e) => {
+//  coverageEnabled = e.target.checked;
+//});
+
 async function sendRequest() {
   saveEditorContent();
   compressAndUpdateURL();
@@ -151,12 +155,19 @@ async function sendRequest() {
       },
       body: JSON.stringify(payload),
     });
-
-
     const text = await response.text();
+
     let data = JSON.parse(text);
+    if (!response.ok) {
+      throw new Error(data.errors);
+    }
+
     clearAllHighlights(editors.package);
-    highlightLines(editors.package, data);
+
+    if (coverageToggle.checked) {
+      console.log("enabled");
+      highlightLines(editors.package, data);
+    }
     let eval = atob(data.data);
     document.getElementById("response").value = eval;
   } catch (err) {

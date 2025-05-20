@@ -23,6 +23,7 @@ import (
 	"os"
 	"sync"
 
+	serrors "github.com/SencilloDev/sencillo-go/errors"
 	"github.com/nats-io/nats.go"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
@@ -168,27 +169,21 @@ func (a *Agent) GetStorage(ctx context.Context, data map[string]any) (storage.St
 	return store, compiler, nil
 }
 
-type Response struct {
-	Data     []byte            `json:"data"`
-	Coverage *cover.FileReport `json:"coverage"`
-}
-
 // Eval evaluates the input against the policy package
-func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]byte, error) {
+func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) (Response, error) {
 	if input == nil {
-		return nil, fmt.Errorf("input required")
+		return Response{}, serrors.NewClientError(fmt.Errorf("input required"), 422)
 	}
 
 	if pkg == "" {
-		return nil, fmt.Errorf("package name required")
+		return Response{}, serrors.NewClientError(fmt.Errorf("package name required"), 422)
 	}
 
 	a.Logger.Debug(fmt.Sprintf("evaluating package: %s", pkg))
 	a.Logger.Debug(fmt.Sprintf("parsing input: %v", string(input)))
 	data, _, err := readInputGetV1(input)
 	if err != nil {
-		a.Logger.Error(err.Error())
-		return nil, err
+		return Response{}, serrors.NewClientError(err, 400)
 	}
 
 	if reqData == "" {
@@ -197,25 +192,24 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 
 	var tempData map[string]any
 	if err := json.Unmarshal([]byte(reqData), &tempData); err != nil {
-		return nil, err
+		return Response{}, serrors.NewClientError(err, 400)
 	}
 
 	store, compiler, err := a.GetStorage(ctx, tempData)
 	if err != nil {
-		return nil, err
+		return Response{}, serrors.NewClientError(err, 400)
 	}
 
 	c := storage.NewContext()
 	txn, err := store.NewTransaction(ctx, storage.TransactionParams{Context: c, Write: true})
 	if err != nil {
-		a.Logger.Error(err.Error())
-		return nil, err
+		return Response{}, serrors.NewClientError(err, 400)
 	}
 
 	cov := cover.New()
 	parsed, err := ast.ParseModule("play.rego", pkg)
 	if err != nil {
-		a.Logger.Error(err.Error())
+		return Response{}, serrors.NewClientError(err, 400)
 	}
 
 	r := rego.New(
@@ -232,8 +226,7 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 
 	prepared, err := r.PrepareForEval(ctx)
 	if err != nil {
-		a.Logger.Error(err.Error())
-		return []byte(err.Error()), nil
+		return Response{}, serrors.NewClientError(err, 400)
 	}
 
 	results, err := prepared.Eval(ctx,
@@ -243,8 +236,7 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 		rego.EvalTracer(cov),
 	)
 	if err != nil {
-		a.Logger.Error(err.Error())
-		return []byte(err.Error()), nil
+		return Response{}, serrors.NewClientError(err, 400)
 	}
 
 	report := cov.Report(map[string]*ast.Module{
@@ -253,26 +245,25 @@ func (a *Agent) Eval(ctx context.Context, input []byte, reqData, pkg string) ([]
 
 	fr, ok := report.Files["play.rego"]
 	if !ok {
-		return nil, fmt.Errorf("error getting files from report")
+		return Response{}, fmt.Errorf("error getting files from report")
 	}
 
 	if len(results) < 1 {
-		return nil, ErrNotFound
+		return Response{}, ErrNotFound
 	}
 
 	value, err := json.MarshalIndent(results[0].Expressions[0].Value, "", "	")
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 
 	a.Logger.Debug(fmt.Sprintf("response: %s", string(value)))
 
-	resp := Response{
+	return Response{
 		Data:     value,
 		Coverage: fr,
-	}
+	}, nil
 
-	return json.Marshal(resp)
 }
 
 func readInputGetV1(data []byte) (ast.Value, *any, error) {

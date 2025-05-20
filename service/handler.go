@@ -19,12 +19,18 @@ import (
 	"net/http"
 
 	sderrors "github.com/SencilloDev/sencillo-go/errors"
+	"github.com/open-policy-agent/opa/v1/cover"
 )
 
 type Request struct {
 	Input   string `json:"input"`
 	Data    string `json:"data"`
 	Package string `json:"package"`
+}
+
+type Response struct {
+	Data     []byte            `json:"data"`
+	Coverage *cover.FileReport `json:"coverage"`
 }
 
 func evaluate(w http.ResponseWriter, r *http.Request, a AppContext) error {
@@ -38,7 +44,5 @@ func evaluate(w http.ResponseWriter, r *http.Request, a AppContext) error {
 		return err
 	}
 
-	w.Write(resp)
-
-	return nil
+	return json.NewEncoder(w).Encode(resp)
 }
