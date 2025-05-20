@@ -3,6 +3,10 @@
     margin-bottom: 1rem;
 }
 
+.opa-highlight {
+  background-color: #fffae6; /* Light yellow background */
+}
+
 .CodeMirror {
     border: 1px solid #ddd;
     height: 200px;

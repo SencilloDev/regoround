@@ -86,8 +86,9 @@ func TestEval(t *testing.T) {
 			if err != nil && v.err == nil {
 				t.Fatal(err)
 			}
-			if !bytes.Equal(v.expected, resp) {
-				t.Errorf("expected\n%s\nbut got\n%s\n", string(v.expected), string(resp))
+
+			if !bytes.Equal(v.expected, resp.Data) {
+				t.Errorf("expected\n%s\nbut got\n%s\n", string(v.expected), string(resp.Data))
 			}
 		})
 	}

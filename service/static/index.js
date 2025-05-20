@@ -14,6 +14,23 @@ function syncEditorHeights() {
   });
 }
 
+function clearAllHighlights(editor) {
+  const lineCount = editor.lineCount();
+  for (let i = 0; i < lineCount; i++) {
+    editor.removeLineClass(i, 'wrap', 'opa-highlight');
+  }
+}
+
+function highlightLines(editor, coverageData) {
+    coverageData.coverage.covered.forEach(range => {
+    const startLine = range.start.row - 1; // Convert to 0-based index
+    const endLine = (range.end.row - range.start.row > 0) ? range.end.row : range.end.row - 1;
+    for (let i = startLine; i <= endLine; i++) {
+      editor.addLineClass(i, 'wrap', 'opa-highlight');
+    }
+  });
+}
+
 // Call it after DOM is ready
 document.addEventListener("DOMContentLoaded", syncEditorHeights);
 
@@ -134,9 +151,20 @@ async function sendRequest() {
       },
       body: JSON.stringify(payload),
     });
-
     const text = await response.text();
-    document.getElementById("response").value = text;
+
+    let data = JSON.parse(text);
+    if (!response.ok) {
+      throw new Error(data.errors);
+    }
+
+    clearAllHighlights(editors.package);
+
+    if (coverageToggle.checked) {
+      highlightLines(editors.package, data);
+    }
+    let eval = atob(data.data);
+    document.getElementById("response").value = eval;
   } catch (err) {
     document.getElementById("response").value = "Error: " + err.message;
   }
