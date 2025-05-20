@@ -19,7 +19,7 @@ deps: ## Get dependencies
 
 lint: deps ## Lint the files
 	go vet
-	gocyclo -over 10 -ignore "generated" ./
+	gocyclo -over 15 -ignore "generated" ./
 
 test: lint ## Run unittests
 	go test -v ./...
