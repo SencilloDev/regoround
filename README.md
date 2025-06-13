@@ -59,7 +59,8 @@ You should now see
 ```
 {
 	"allow": false,
-	"errors": [
+	"errs": [
+		"name Jim is not allowed",
 		"name John is not allowed"
 	]
 }
