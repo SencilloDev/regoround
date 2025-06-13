@@ -1,0 +1,26 @@
+# fly.toml app configuration file generated for regoround on 2025-06-12T16:25:20-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'regoround'
+primary_region = 'iad'
+
+[build]
+  dockerfile = "Dockerfile.fly"
+[env]
+  PORT = '8080'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[processes]
+  app = "service start --bundle-path ./bundle.tar.gz"
+
+[[vm]]
+  size = 'shared-cpu-1x'
