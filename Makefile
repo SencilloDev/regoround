@@ -44,9 +44,6 @@ docs: ## Builds the cli documentation
 	mkdir -p docs
 	./regoroundctl docs
 
-schema: ## Generates boilerplate code from the graph/schema.graphqls file
-	go run github.com/99designs/gqlgen update
-
 bundle: ## Creates an OPA bundle
 	opa build -b ./bundle -o bundle.tar.gz
 
