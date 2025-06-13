@@ -28,7 +28,7 @@ errors := names.errors
 ####  Input
 ```
 {
- 	"name": "John"
+ 	"names": ["John", "Jim"]
 }
 ```
 

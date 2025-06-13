@@ -2,18 +2,24 @@ package names
 
 error_list := {"unallowed_name": "name %v is not allowed"}
 
+user_names := input.names
+
 default allow := false
 
 allow if {
-	allowed_name
-	not count(errors) > 0
+	allowed_names
 }
 
-allowed_name if {
-	input.name in data.rules.allowed_names
+allowed_names if {
+	not count(unallowed_names) > 0
+}
+
+unallowed_names contains name if {
+	some name in user_names
+	not name in data.rules.allowed_names
 }
 
 errors contains err if {
-	not allowed_name
-	err := sprintf(error_list.unallowed_name, [input.name])
+	some name in unallowed_names
+	err := sprintf(error_list.unallowed_name, [name])
 }
