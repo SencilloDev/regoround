@@ -5,7 +5,7 @@ The app description
 ### Options
 
 ```
-      --config string   config file (default is $HOME/.playground.json)
+      --config string   config file (default is $HOME/.regoround.json)
   -h, --help            help for regoroundctl
   -t, --toggle          Help message for toggle
 ```

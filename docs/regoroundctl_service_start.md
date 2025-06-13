@@ -16,7 +16,7 @@ regoroundctl service start [flags]
 
 ```
       --bundle-path string   Path to bundle
-      --config string        config file (default is $HOME/.playground.json)
+      --config string        config file (default is $HOME/.regoround.json)
   -p, --port int             Server port (default 8080)
 ```
 

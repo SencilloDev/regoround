@@ -31,7 +31,7 @@ regoroundctl completion fish [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string   config file (default is $HOME/.playground.json)
+      --config string   config file (default is $HOME/.regoround.json)
 ```
 
 ### SEE ALSO
