@@ -6,11 +6,7 @@ VERSION := $(shell if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then 
 GOOS=$(shell go env GOOS)
 GOARCH=$(shell go env GOARCH)
 
-IMAGE_REPO=local/${shell basename ${PWD}}
-IMAGE=${IMAGE_REPO}:${VERSION}
-TEST_IMAGE:=${IMAGE_REPO}-test:${VERSION}
-
-.PHONY: all build docker deps clean test coverage lint docker-local k8s-up k8s-down docker-delete docs update-local deploy-local bundle
+.PHONY: all build docker deps clean test coverage goreleaser fmt lint docs bundle
 
 all: build
 
