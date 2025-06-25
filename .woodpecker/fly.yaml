@@ -1,0 +1,15 @@
+when:
+  - branch: main
+  - event: push
+
+steps:
+  deploy:
+    image: cgr.dev/chainguard/go:latest-dev
+    commands:
+      - export PATH=$PATH:/root/go/bin
+      - curl -L https://fly.io/install.sh | sh
+      - /root/.fly/bin/flyctl deploy
+    environment: 
+      FLY_API_TOKEN:
+        from_secret: fly_access_token
+
