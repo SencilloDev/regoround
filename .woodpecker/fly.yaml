@@ -1,9 +1,8 @@
-when:
-  - branch: main
-  - event: push
-
 steps:
-  deploy:
+  - name: fly deployment
+    when:
+      branch: main
+      event: push
     image: cgr.dev/chainguard/go:latest-dev
     commands:
       - export PATH=$PATH:/root/go/bin
