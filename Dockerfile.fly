@@ -1,4 +1,4 @@
-FROM golang:alpine as builder
+FROM cgr.dev/chainguard/go:latest-dev as builder
 WORKDIR /app
 ENV IMAGE_TAG=dev
 RUN apk update && apk upgrade && apk add --no-cache ca-certificates git
@@ -7,13 +7,9 @@ ADD . /app/
 ARG VERSION
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags="-s -w -X 'github.com/SencilloDev/regoround/cmd.Version=${VERSION}'" -installsuffix cgo -o regoroundctl .
 
-FROM builder AS tester
-RUN go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
-
-FROM scratch
+FROM cgr.dev/chainguard/static
 
 COPY --from=builder /app/regoroundctl .
 COPY --from=builder /app/bundle.tar.gz .
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENTRYPOINT ["./regoroundctl"]
