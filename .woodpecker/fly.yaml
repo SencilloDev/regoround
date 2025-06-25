@@ -5,10 +5,13 @@ steps:
       event: push
     image: cgr.dev/chainguard/go:latest-dev
     commands:
+      - apk add --no-cache curl
       - export PATH=$PATH:/root/go/bin
       - curl -L https://fly.io/install.sh | sh
       - /root/.fly/bin/flyctl deploy
     environment: 
       FLY_API_TOKEN:
         from_secret: fly_access_token
+depends_on:
+  - test
 

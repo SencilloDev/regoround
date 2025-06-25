@@ -1,9 +1,8 @@
-when:
-  - branch: main
-  - event: tag
-
 steps:
   - name: goreleaser
+    when:
+      branch: main
+      event: tag
     image: goreleaser/goreleaser
     commands:
       - goreleaser release --clean
@@ -11,3 +10,5 @@ steps:
       GOPRIVATE: github.com/SencilloDev
       GITHUB_TOKEN:
         from_secret: github_token
+depends_on:
+  - test
