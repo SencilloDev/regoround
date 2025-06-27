@@ -1,9 +1,7 @@
 env:
   - IMAGE_TAG={{.Tag}}
 
-archives:
-  - format: binary
-
+version: 2
 project_name: regoroundctl
 
 builds:
@@ -11,7 +9,7 @@ builds:
     flags:
       - -mod=vendor
     env:
-      - "CGO_ENABLED=0"
+      - CGO_ENABLED=0
       - "GO111MODULE=on"
     goos:
       - linux
@@ -20,5 +18,28 @@ builds:
     goarch:
       - amd64
       - arm64
-source:
-  enabled: true
+
+archives:
+  - formats: [binary]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
