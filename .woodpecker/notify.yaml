@@ -5,7 +5,7 @@ steps:
     image: appleboy/drone-telegram
     settings:
       token: 
-        from_secret: bot_token
+        from_secret: telegram_token
       to: 
-        from_secret: telegram_user
+        from_secret: telegram_group
 
