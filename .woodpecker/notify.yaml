@@ -8,4 +8,7 @@ steps:
         from_secret: telegram_token
       to: 
         from_secret: telegram_group
-
+depends_on:
+  - test
+  - go_releaser
+  - fly
