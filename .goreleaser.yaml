@@ -1,15 +1,10 @@
-env:
-  - IMAGE_TAG={{.Tag}}
-
 version: 2
 project_name: regoroundctl
 
 builds:
-  - ldflags: "-extldflags= -w -X 'github.com/SencilloDev/regoround/cmd.Version={{.Tag}}'"
-    flags:
-      - -mod=vendor
-    env:
+  - env:
       - CGO_ENABLED=0
+      - IMAGE_TAG={{.Tag}}
       - "GO111MODULE=on"
     goos:
       - linux
@@ -18,10 +13,12 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags: "-extldflags= -w -X 'github.com/SencilloDev/regoround/cmd.Version={{.Tag}}'"
+    flags:
+      - -mod=vendor
 
 archives:
   - formats: [binary]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -29,6 +26,10 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [binary]
 
 changelog:
   sort: asc

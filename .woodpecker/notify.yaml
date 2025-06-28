@@ -1,0 +1,11 @@
+steps:
+  - name: send telegram notification
+    when:
+      event: push
+    image: appleboy/drone-telegram
+    settings:
+      token: 
+        from_secret: bot_token
+      to: 
+        from_secret: telegram_user
+
