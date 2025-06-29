@@ -14,4 +14,3 @@ steps:
         from_secret: fly_access_token
 depends_on:
   - test
-
